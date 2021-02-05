@@ -16,42 +16,45 @@ app.use(express.static("./Develop/public"));
 app.get("/", (req, res) => res.sendFile(path.join(__dirname, "./Develop/public/index.html")));
 app.get("/notes", (req, res) => res.sendFile(path.join(__dirname, "./Develop/public/notes.html")));
 
-fs.readFile("./Develop/db/db.json", "utf8", (err, data) => {
-    if (err) {
-        // console.error("Error in Read FIle: ", err);
-        throw err;
-    }
+// Putting the list of notes into a variable for easy access
+let noteList = JSON.parse(fs.readFileSync('./Develop/db/db.json', 'utf8'));
 
-    let noteList = JSON.parse(data)
+// API routes
 
-    // API routes
+// Get route for reading json file and returning saved notes
+app.get("/api/notes", (req, res) => {
+    return res.json(noteList)
+});
 
-    // Get route for reading json file and returning saved notes
-    app.get("/api/notes", (req, res) => {
-        return res.json(noteList)
-    });
-
-    // Post route for receiving new notes, assigning each note an id, and pushes to the db
-    app.post("/api/notes", (req, res) => {
-        let newNote = req.body;
-        newNote.id =`${Date.now()}`;
+// Post route for receiving new notes, assigning each note an id, and pushes to the db
+app.post("/api/notes", (req, res) => {
+    let newNote = req.body;
+    newNote.id =`${Date.now()}`;
     
-        noteList.push(newNote);
-        dbUpdate();
-        return console.log("Added note: " + newNote);
-    })
+    noteList.push(newNote);
+    dbUpdate(noteList, res);
+    return console.log("Added note: " + newNote);
+});
 
-    // Function for updating json file whenever a change is made
-    function dbUpdate() {
-        fs.writeFile("./Develop/db/db.json", JSON.stringify(noteList), err => {
-            if (err) {
-                throw err;
-            }
-            console.log("Updated db!")
-            console.log(noteList)
-        });
-    }
-})
+// Delete route for removing notes
+app.delete("/api/notes/:id", (req, res) => {
+    let deleteSelection = req.params.id;
+    let deleteIndex = noteList.indexOf(deleteSelection);
+    noteList.splice(deleteIndex, 1);
+    dbUpdate(deleteIndex, res);
+});
+
+// Function for updating json file whenever a change is made
+function dbUpdate(arr, res) {
+    fs.writeFile("./Develop/db/db.json", JSON.stringify(noteList), err => {
+        if (err) {
+            throw err;
+        }
+        console.log("Updated db!")
+        console.log(noteList)
+        res.send();
+    });
+}
 
 // Server listener
 app.listen(PORT, () => console.log(`App listening on PORT ${PORT}`));

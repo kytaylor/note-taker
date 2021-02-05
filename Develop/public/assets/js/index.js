@@ -61,9 +61,9 @@ const renderActiveNote = () => {
   } else {
     noteTitle.value = '';
     noteText.value = '';
-    // noteTitle.readOnly = false;
-    // noteText.readOnly = false;
   }
+  noteTitle.readOnly = false;
+  noteText.readOnly = false;
 };
 
 const handleNoteSave = () => {
